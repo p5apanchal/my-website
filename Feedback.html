@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Enquiry & Feedback Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #56ab2f, #00b4db);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .main-container {
+      display: flex;
+      background-color: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      flex-wrap: wrap;
+      max-width: 1200px;
+      width: 100%;
+      overflow: hidden;
+      color: #222;
+    }
+    .form-box { flex: 3; padding: 30px; background: #fff; color: #222; }
+    .feedback-box {
+      flex: 2; padding: 30px;
+      background: rgba(255, 255, 255, 0.9);
+      border-left: 2px dashed #00b4db; color: #222;
+    }
+    h2 { text-align: center; margin-bottom: 20px; color: #56ab2f; }
+    .feedback-box h3 { text-align: center; margin-bottom: 20px; color: #00b4db; }
+    input, textarea, select {
+      width: 100%; padding: 12px; margin-bottom: 15px;
+      border: 1px solid #00b4db; border-radius: 8px;
+      font-size: 14px; background: #fff; color: #222;
+    }
+    button {
+      width: 100%; padding: 12px; background: #00b4db;
+      border: none; border-radius: 8px;
+      font-weight: bold; font-size: 16px; color: #fff;
+      cursor: pointer; transition: 0.3s;
+    }
+    button:hover { background: #0092b3; }
+    table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      border-radius: 10px; overflow: hidden; color: #222;
+      margin-top: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td { padding: 10px 15px; border-bottom: 1px solid #ddd; font-size: 14px; }
+    th { background: #f2f2f2; }
+    td.rating { color: #FFD700; font-weight: bold; }
+    #toggleFeedback {
+      margin-top:15px; padding:10px 20px; border:none;
+      border-radius:6px; background:#00b4db; color:#fff; cursor:pointer;
+    }
+    @media screen and (max-width: 900px) {
+      .main-container { flex-direction: column; }
+      .form-box, .feedback-box { border-left: none; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Enquiry Form -->
+    <div class="form-box">
+      <h2>Enquiry Form</h2>
+      <form id="enquiryForm">
+        <input type="text" name="name" placeholder="Your Name.." required />
+        <input type="email" name="email" placeholder="Your Email.." required />
+        <input type="tel" name="phone" placeholder="Your Mobile Number.." required />
+        <input type="text" name="address" placeholder="Your Address.." required />
+        <input type="text" name="postalCode" placeholder="Your Pincode.." required />
+        <input type="text" name="location" placeholder="Your City / Location.." required />
+        <input type="text" name="referredBy" placeholder="Referred By.." required />
+        <textarea name="message" rows="4" placeholder="Your Message.." required></textarea>
+        <button type="submit">Submit Enquiry</button>
+      </form>
+    </div>
+
+    <!-- Feedback Form -->
+    <div class="feedback-box">
+      <h3>Submit Your Feedback</h3>
+      <form id="feedbackForm">
+        <input type="text" name="name" placeholder="Your Name.." required />
+        <input type="text" name="location" placeholder="Your City / Location.." required />
+        <input type="text" name="mobile" placeholder="Your Mobile No.." required />
+        <select name="rating" required>
+          <option value="">Rate Us...</option>
+          <option value="5">★★★★★ (Excellent)</option>
+          <option value="4">★★★★☆ (Good)</option>
+          <option value="3">★★★☆☆ (Average)</option>
+          <option value="2">★★☆☆☆ (Poor)</option>
+          <option value="1">★☆☆☆☆ (Very Bad)</option>
+        </select>
+        <textarea name="message" rows="3" placeholder="Your Feedback.." required></textarea>
+        <button type="submit">Submit Feedback</button>
+      </form>
+
+      <h3 style="margin-top: 30px">Recent Feedback</h3>
+      <table id="feedbackTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Rating</th>
+            <th>Location</th>
+            <th>MobileNo</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button id="toggleFeedback">View More</button>
+    </div>
+  </div>
+
+  <script>
+    // localStorage માંથી feedbackData લોડ કરો અથવા ડિફોલ્ટ ડેટા રાખો
+    let feedbackData = JSON.parse(localStorage.getItem('feedbackData')) || [
+      { name: "Rahul Patel", rating: 5, location: "Surat", mobileno: "9874152633", message: "Excellent service and support!" },
+      { name: "Neha Shah", rating: 4, location: "Navsari", message: "Good quality panels and quick response." },
+      { name: "Vijay Soni", rating: 5, location: "Valsad", message: "Fast installation and affordable." },
+      { name: "Kiran Mistry", rating: 3, location: "Surat", message: "Affordable prices but slight delay." },
+      { name: "Mehul Joshi", rating: 4, location: "Vyara", message: "Work completed on time." }
+    ];
+
+    let currentFeedbacks = [];
+    let showAll = false;
+
+    function renderFeedbackTable(data) {
+      const tbody = document.querySelector('#feedbackTable tbody');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="4" style="text-align:center; font-style:italic;">all feedback show</td>`;
+        tbody.appendChild(tr);
+        document.getElementById('toggleFeedback').style.display = 'none';
+        return;
+      }
+
+      const visibleData = showAll ? data : data.slice(0, 3);
+
+      visibleData.forEach(item => {
+        const tr = document.createElement('tr');
+        const stars = '★'.repeat(item.rating) + '☆'.repeat(5 - item.rating);
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td class="rating">${stars}</td>
+          <td>${item.location}</td>
+          <td>${item.mobile}</td>
+          <td>${item.message}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('toggleFeedback').style.display = (data.length > 3) ? 'inline-block' : 'none';
+      document.getElementById('toggleFeedback').textContent = showAll ? "View Less" : "View More";
+    }
+
+    // Page load પર બધા feedbacks બતાવો
+    currentFeedbacks = feedbackData;
+    renderFeedbackTable(currentFeedbacks);
+
+    // View More / Less toggle
+    document.getElementById('toggleFeedback').addEventListener('click', () => {
+      showAll = !showAll;
+      renderFeedbackTable(currentFeedbacks);
+    });
+
+    // Enquiry Form Location input પર live feedback filter
+    const locationInput = document.querySelector('#enquiryForm input[name="location"]');
+    locationInput.addEventListener('input', () => {
+      const loc = locationInput.value.trim().toLowerCase();
+
+      if (loc.length === 0) {
+        currentFeedbacks = feedbackData; // જો match ના થાય તો બધા feedback બતાવો
+      } else {
+        const filtered = feedbackData.filter(fb => fb.location.toLowerCase().includes(loc));
+        currentFeedbacks = filtered.length > 0 ? filtered : feedbackData; // જો match ના થાય તો બધા feedback બતાવો
+      }
+
+      showAll = false;
+      renderFeedbackTable(currentFeedbacks);
+    });
+
+    // Feedback form submit without backend, store in localStorage
+    document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      alert('Your feedback has been successfully submitted!');
+
+      const newFeedback = {
+        name: formData.get('name'),
+        rating: parseInt(formData.get('rating')),
+        location: formData.get('location'),
+        mobile: formData.get('mobile'),  // Save mobile number
+        message: formData.get('message')
+      };
+
+      feedbackData.unshift(newFeedback);  // નવી એન્ટ્રી ટોપ પર ઉમેરો
+      localStorage.setItem('feedbackData', JSON.stringify(feedbackData));  // localStorage માં સાચવો
+
+      // ફીલ્ટર લાગુ કરી રહી છે, તો નવી ફીડબેક પણ દર્શાવો (filter ફરીથી લાગુ કરવો)
+      const loc = locationInput.value.trim().toLowerCase();
+      if (loc.length === 0) {
+        currentFeedbacks = feedbackData;
+      } else {
+        currentFeedbacks = feedbackData.filter(fb => fb.location.toLowerCase().includes(loc));
+      }
+
+      showAll = false;
+      renderFeedbackTable(currentFeedbacks);
+      this.reset();
+    });
+
+    // Enquiry form submit - Google Sheets URL સાથે
+    document.getElementById('enquiryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      fetch('https://script.google.com/macros/s/AKfycbzy8CsMMUFsDdgWyUcSkZa_FrVD8ud0PXJB7dX7npZKGlDm5FoWxCVVuc9QaKHw2Fllvg/exec', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.result === 'success'){
+          alert('Your enquiry has been sent successfully!');
+          this.reset();
+          currentFeedbacks = feedbackData;
+          renderFeedbackTable(currentFeedbacks);
+        } else {
+          alert('Submission failed. Please try again.');
+        }
+      })
+      .catch(error => {
+        alert('Error submitting enquiry.');
+        console.error('Error:', error);
+      });
+    });
+  </script>
+</body>
+</html>
